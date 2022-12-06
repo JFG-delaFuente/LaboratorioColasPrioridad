@@ -28,12 +28,12 @@ public class UrgenciasAED implements Urgencias{
 			  urgencias.add(0, nuevo);
 			  return nuevo;
 		  }
-		  if(tamaño==1) {
+		  if(tamaño==0) {
 			  if(urgencias.get(0).compareTo(nuevo)<=0) urgencias.add(urgencias.size(),nuevo);
 			  if(urgencias.get(0).compareTo(nuevo)>0) urgencias.add(0, nuevo);
 			  return nuevo;
 		  }
-		  if(tamaño>1) {
+		  if(tamaño>=1) {
 			  centro=(ultimo+primero)/2;
 			  prev=centro-1;
 			  sig=centro+1;
@@ -48,7 +48,7 @@ public class UrgenciasAED implements Urgencias{
 			  if(urgencias.get(centro).compareTo(nuevo)<=0) return añadir(nuevo,sig,ultimo);
 			  if(urgencias.get(centro).compareTo(nuevo)<=0) return añadir(nuevo,primero,prev);
 		  }
-		  return nuevo;
+		  return null;
 	}
 	public Paciente salirPaciente(String DNI, int hora) throws PacienteNoExisteException{
 		int index = urgencias.indexOf(new Paciente(DNI,0,hora,hora));
@@ -76,57 +76,9 @@ public class UrgenciasAED implements Urgencias{
 			return atendido;
 		}
 	}
-	
-	
-	/*
 	public void aumentaPrioridad(int maxTiempoEspera, int hora) {
-		for(int i=0; i<urgencias.size(); i++) {
-			if((hora-urgencias.get(i).getTiempoAdmisionEnPrioridad())>maxTiempoEspera) {
-				urgencias.get(i).setPrioridad(urgencias.get(i).getPrioridad()-1);
-				urgencias.get(i).setTiempoAdmisionEnPrioridad(hora);
-			}
-		}
-		reordenarUrgencias();
-	}*/
-	
-	
-	public void aumentaPrioridad(int maxTiempoEspera, int hora) {
-		aumentaPrioridadAux(maxTiempoEspera, 0, urgencias.size()-1, hora);
+		
 	}
-	private void aumentaPrioridadAux(int maxTiempoEspera, int primero, int ultimo, int hora) {
-		int size=ultimo-primero;
-		if(size==0) {
-			if((hora-urgencias.get(primero).getTiempoAdmisionEnPrioridad())>maxTiempoEspera && urgencias.get(primero).getPrioridad()>0) {
-				urgencias.get(primero).setPrioridad(urgencias.get(primero).getPrioridad()-1);
-				urgencias.get(primero).setTiempoAdmisionEnPrioridad(hora);
-				reordenarUrgencias();
-			}
-		}
-		else if(size==1) {
-			if((hora-urgencias.get(primero).getTiempoAdmisionEnPrioridad())>maxTiempoEspera && urgencias.get(primero).getPrioridad()>0) {
-				urgencias.get(primero).setPrioridad(urgencias.get(primero).getPrioridad()-1);
-			    urgencias.get(primero).setTiempoAdmisionEnPrioridad(hora);
-			}
-			if((hora-urgencias.get(ultimo).getTiempoAdmisionEnPrioridad())>maxTiempoEspera && urgencias.get(primero).getPrioridad()>0) {
-				urgencias.get(ultimo).setPrioridad(urgencias.get(ultimo).getPrioridad()-1);
-				urgencias.get(primero).setTiempoAdmisionEnPrioridad(hora);
-			}
-			reordenarUrgencias();
-		}
-		else if(size>=2) {
-			int center=(ultimo+primero)/2;
-			if(urgencias.get(center).getTiempoAdmisionEnPrioridad()<urgencias.get(center-1).getTiempoAdmisionEnPrioridad()) 
-				aumentaPrioridadAux(maxTiempoEspera, primero, center-1, hora);
-			else if(urgencias.get(center).getTiempoAdmisionEnPrioridad()<urgencias.get(center+1).getTiempoAdmisionEnPrioridad())
-				aumentaPrioridadAux(maxTiempoEspera, center+1, ultimo, hora);
-			else if(urgencias.get(center).getTiempoAdmisionEnPrioridad()>urgencias.get(center-1).getTiempoAdmisionEnPrioridad())
-				aumentaPrioridadAux(maxTiempoEspera, center+1, ultimo, hora);
-			else if(urgencias.get(center).getTiempoAdmisionEnPrioridad()>urgencias.get(center+1).getTiempoAdmisionEnPrioridad())
-				aumentaPrioridadAux(maxTiempoEspera, primero, center-1, hora);
-		}
-	}	
-	
-	
 	public Iterable<Paciente> pacientesEsperando(){
 		return urgencias;
 	}
@@ -138,34 +90,8 @@ public class UrgenciasAED implements Urgencias{
 		}
 	}
 	public Pair<Integer,Integer> informacionEspera(){
-		//Falta implementar
-		Pair<Integer, Integer> info=new Pair<Integer, Integer>(0,0);
-		return info;
+		return null;
 	}
 	
-	//Método auxiliar
-	private void reordenarUrgencias() {
-		Paciente aux;
-		if(urgencias.size()>1) {
-			for(int i=0; i<urgencias.size(); i++) {
-				if(urgencias.get(i).getPrioridad()>urgencias.get(i+1).getPrioridad()) {
-					aux=urgencias.get(i);
-					urgencias.set(i, urgencias.get(i+1));
-					urgencias.set(i+1, aux);
-				}
-				if(urgencias.get(i).getPrioridad()==urgencias.get(i+1).getPrioridad() && urgencias.get(i).getTiempoAdmisionEnPrioridad()<urgencias.get(i+1).getTiempoAdmisionEnPrioridad()) {
-					aux=urgencias.get(i);
-					urgencias.set(i, urgencias.get(i+1));
-					urgencias.set(i+1, aux);
-				}
-				if(urgencias.get(i).getPrioridad()==urgencias.get(i+1).getPrioridad() && urgencias.get(i).getTiempoAdmisionEnPrioridad()==urgencias.get(i+1).getTiempoAdmisionEnPrioridad()
-						&& urgencias.get(i).getTiempoAdmision()<urgencias.get(i+1).getTiempoAdmision()) {
-					aux=urgencias.get(i);
-					urgencias.set(i, urgencias.get(i+1));
-					urgencias.set(i+1, aux);
-				}
-			}
-		}
-	}
 	
 }
