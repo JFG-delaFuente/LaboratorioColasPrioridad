@@ -1,0 +1,171 @@
+package aed.urgencias;
+
+
+import es.upm.aedlib.Pair;
+import es.upm.aedlib.indexedlist.*;
+
+public class UrgenciasAED implements Urgencias{
+	private ArrayIndexedList<Paciente> urgencias;
+	
+	//CONSTRUCTOR
+	public UrgenciasAED() {
+		this.urgencias=new ArrayIndexedList<Paciente>();
+	}
+	
+	public Paciente admitirPaciente(String DNI, int prioridad, int hora) throws PacienteExisteException{
+		Paciente nuevo = new Paciente(DNI,prioridad,hora,hora);
+		if(urgencias.indexOf(nuevo)!=-1) throw new PacienteExisteException();
+		else {
+			return añadir(nuevo,0,urgencias.size()-1);//BUSQUEDA BINARIA RECURSIVA
+			}
+	}
+	private Paciente añadir(Paciente nuevo,int primero,int ultimo) {
+		int tamaño=ultimo-primero;
+		  int prev;
+		  int sig;
+		  int centro;
+		  if(tamaño<0) {
+			  urgencias.add(0, nuevo);
+			  return nuevo;
+		  }
+		  if(tamaño==1) {
+			  if(urgencias.get(0).compareTo(nuevo)<=0) urgencias.add(urgencias.size(),nuevo);
+			  if(urgencias.get(0).compareTo(nuevo)>0) urgencias.add(0, nuevo);
+			  return nuevo;
+		  }
+		  if(tamaño>1) {
+			  centro=(ultimo+primero)/2;
+			  prev=centro-1;
+			  sig=centro+1;
+			  if(urgencias.get(centro).compareTo(nuevo)<=0 && urgencias.get(sig).compareTo(nuevo)>=0) {
+				  urgencias.add(sig, nuevo);
+				  return nuevo;
+			  }
+			  if(urgencias.get(centro).compareTo(nuevo)>=0 && urgencias.get(prev).compareTo(nuevo)<=0) {
+				  urgencias.add(centro, nuevo);
+				  return nuevo;
+			  }
+			  if(urgencias.get(centro).compareTo(nuevo)<=0) return añadir(nuevo,sig,ultimo);
+			  if(urgencias.get(centro).compareTo(nuevo)<=0) return añadir(nuevo,primero,prev);
+		  }
+		  return nuevo;
+	}
+	public Paciente salirPaciente(String DNI, int hora) throws PacienteNoExisteException{
+		int index = urgencias.indexOf(new Paciente(DNI,0,hora,hora));
+		if(index==-1) throw new PacienteNoExisteException();
+		else {
+			Paciente salida = urgencias.removeElementAt(index);
+			return salida;
+		}
+		
+	}
+	public Paciente cambiarPrioridad(String DNI, int nuevaPrioridad, int hora) throws PacienteNoExisteException{
+		int index = urgencias.indexOf(new Paciente(DNI,0,0,0));
+		if(index==-1) throw new PacienteNoExisteException();
+		else {
+			int horaAdmision=urgencias.get(index).getTiempoAdmision();
+			Paciente nuevo=new Paciente(DNI,nuevaPrioridad,horaAdmision,hora);
+			urgencias.set(index, nuevo);
+			return nuevo;
+		}
+	}
+	public Paciente atenderPaciente(int hora) {
+		if(urgencias.isEmpty()) return null;
+		else {
+			Paciente atendido=urgencias.removeElementAt(0);
+			return atendido;
+		}
+	}
+	
+	
+	/*
+	public void aumentaPrioridad(int maxTiempoEspera, int hora) {
+		for(int i=0; i<urgencias.size(); i++) {
+			if((hora-urgencias.get(i).getTiempoAdmisionEnPrioridad())>maxTiempoEspera) {
+				urgencias.get(i).setPrioridad(urgencias.get(i).getPrioridad()-1);
+				urgencias.get(i).setTiempoAdmisionEnPrioridad(hora);
+			}
+		}
+		reordenarUrgencias();
+	}*/
+	
+	
+	public void aumentaPrioridad(int maxTiempoEspera, int hora) {
+		aumentaPrioridadAux(maxTiempoEspera, 0, urgencias.size()-1, hora);
+	}
+	private void aumentaPrioridadAux(int maxTiempoEspera, int primero, int ultimo, int hora) {
+		int size=ultimo-primero;
+		if(size==0) {
+			if((hora-urgencias.get(primero).getTiempoAdmisionEnPrioridad())>maxTiempoEspera && urgencias.get(primero).getPrioridad()>0) {
+				urgencias.get(primero).setPrioridad(urgencias.get(primero).getPrioridad()-1);
+				urgencias.get(primero).setTiempoAdmisionEnPrioridad(hora);
+				reordenarUrgencias();
+			}
+		}
+		else if(size==1) {
+			if((hora-urgencias.get(primero).getTiempoAdmisionEnPrioridad())>maxTiempoEspera && urgencias.get(primero).getPrioridad()>0) {
+				urgencias.get(primero).setPrioridad(urgencias.get(primero).getPrioridad()-1);
+			    urgencias.get(primero).setTiempoAdmisionEnPrioridad(hora);
+			}
+			if((hora-urgencias.get(ultimo).getTiempoAdmisionEnPrioridad())>maxTiempoEspera && urgencias.get(primero).getPrioridad()>0) {
+				urgencias.get(ultimo).setPrioridad(urgencias.get(ultimo).getPrioridad()-1);
+				urgencias.get(primero).setTiempoAdmisionEnPrioridad(hora);
+			}
+			reordenarUrgencias();
+		}
+		else if(size>=2) {
+			int center=(ultimo+primero)/2;
+			if(urgencias.get(center).getTiempoAdmisionEnPrioridad()<urgencias.get(center-1).getTiempoAdmisionEnPrioridad()) 
+				aumentaPrioridadAux(maxTiempoEspera, primero, center-1, hora);
+			else if(urgencias.get(center).getTiempoAdmisionEnPrioridad()<urgencias.get(center+1).getTiempoAdmisionEnPrioridad())
+				aumentaPrioridadAux(maxTiempoEspera, center+1, ultimo, hora);
+			else if(urgencias.get(center).getTiempoAdmisionEnPrioridad()>urgencias.get(center-1).getTiempoAdmisionEnPrioridad())
+				aumentaPrioridadAux(maxTiempoEspera, center+1, ultimo, hora);
+			else if(urgencias.get(center).getTiempoAdmisionEnPrioridad()>urgencias.get(center+1).getTiempoAdmisionEnPrioridad())
+				aumentaPrioridadAux(maxTiempoEspera, primero, center-1, hora);
+		}
+	}	
+	
+	
+	public Iterable<Paciente> pacientesEsperando(){
+		return urgencias;
+	}
+	public Paciente getPaciente(String DNI) {
+		int index = urgencias.indexOf(new Paciente(DNI,0,0,0));
+		if(index==-1) return null;
+		else {
+			return urgencias.get(index);
+		}
+	}
+	public Pair<Integer,Integer> informacionEspera(){
+		//Falta implementar
+		Pair<Integer, Integer> info=new Pair<Integer, Integer>(0,0);
+		return info;
+	}
+	
+	//Método auxiliar
+	private void reordenarUrgencias() {
+		Paciente aux;
+		if(urgencias.size()>1) {
+			for(int i=0; i<urgencias.size(); i++) {
+				if(urgencias.get(i).getPrioridad()>urgencias.get(i+1).getPrioridad()) {
+					aux=urgencias.get(i);
+					urgencias.set(i, urgencias.get(i+1));
+					urgencias.set(i+1, aux);
+				}
+				if(urgencias.get(i).getPrioridad()==urgencias.get(i+1).getPrioridad() && urgencias.get(i).getTiempoAdmisionEnPrioridad()<urgencias.get(i+1).getTiempoAdmisionEnPrioridad()) {
+					aux=urgencias.get(i);
+					urgencias.set(i, urgencias.get(i+1));
+					urgencias.set(i+1, aux);
+				}
+				if(urgencias.get(i).getPrioridad()==urgencias.get(i+1).getPrioridad() && urgencias.get(i).getTiempoAdmisionEnPrioridad()==urgencias.get(i+1).getTiempoAdmisionEnPrioridad()
+						&& urgencias.get(i).getTiempoAdmision()<urgencias.get(i+1).getTiempoAdmision()) {
+					aux=urgencias.get(i);
+					urgencias.set(i, urgencias.get(i+1));
+					urgencias.set(i+1, aux);
+				}
+			}
+		}
+	}
+	
+}
